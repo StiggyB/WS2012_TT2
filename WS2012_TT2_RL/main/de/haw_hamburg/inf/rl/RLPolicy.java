@@ -10,7 +10,7 @@ public class RLPolicy {
     private Object qValuesTable;
     int            states, actions;
 
-    RLPolicy(int[] dimSize) {
+    public RLPolicy(int[] dimSize) {
 
         this.dimSize = dimSize;
 

@@ -17,6 +17,10 @@ import java.awt.event.ActionEvent;
 import java.util.Observable;
 import java.util.Observer;
 import javax.swing.JTextField;
+
+import de.haw_hamburg.inf.environment.GWorld;
+import de.haw_hamburg.inf.rl.RLPolicy;
+
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 
@@ -73,8 +77,8 @@ public class GridGUI implements Observer {
     private JPanel     panel_47;
     private JPanel     panel_3;
     private JPanel     panel_6;
-
-    GUIControl         gc = new GUIControl();
+    int[] a ={10,5,4};
+    GridControl         gc = new GridControl(new GWorld(), new RLPolicy(a));
 
     /**
      * Launch the application.
@@ -112,6 +116,7 @@ public class GridGUI implements Observer {
         frame.getContentPane().setLayout(null);
         frame.setSize(800, 600);
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame.setResizable(false);
 
         panel = new JPanel();
         panel.setBounds(248, 13, 522, 262);
@@ -1707,14 +1712,24 @@ public class GridGUI implements Observer {
         lblTarget50.setBounds(10, 17, 30, 16);
         panel_50.add(lblTarget50);
 
-        JButton btnStartRandomTarget = new JButton(
+        final JButton btnStartRandomTarget = new JButton(
                 "Start random target");
+        btnStartRandomTarget.setBackground(Color.GREEN);
+
         btnStartRandomTarget.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
-                gc.reset();
-                gc.addObserver(window);
-                Thread t = new Thread(gc);
-                t.start();
+                if (!gc.isRunning()) {
+                    gc.reset();
+                    gc.addObserver(window);
+                    Thread t = new Thread(gc);
+                    t.start();
+                    btnStartRandomTarget.setBackground(Color.RED);
+                    btnStartRandomTarget.setText("Stop random target");
+                } else {
+                    gc.terminate();
+                    btnStartRandomTarget.setBackground(Color.GREEN);
+                    btnStartRandomTarget.setText("Start random target");
+                }
             }
         });
         btnStartRandomTarget.setBounds(248, 300, 162, 25);
