@@ -25,7 +25,37 @@ public class GridControl extends Observable implements Runnable {
         super.setChanged();
     }
 
-    private void moveTarget(int t) {
+
+
+    @Override
+    public void run() {
+        running = true;
+        Random r = new Random();
+        int t = 1;
+        while (running) {
+            runGridGame();
+            if (movingTarget) {
+                randomTarget(r.nextInt(5) + 1);
+            } else {
+                circlingTarget(t++);
+                t = t >= 5 ? 1 : t;
+            }
+        }
+    }
+
+    private void runGridGame() {
+        int action = -1;
+        while(!world.endState()) {
+            action = policy.getBestAction(world.getState());
+            
+            notifyObservers(world.getNextState(action));
+            
+            
+        }
+        
+    }
+    
+    private void randomTarget(int t) {
         notifyObservers(t * 10);
         long t1 = System.currentTimeMillis();
         setChanged();
@@ -44,29 +74,25 @@ public class GridControl extends Observable implements Runnable {
         System.out.println("Time Passed: " + (t2 - t1) / 1000 + "s");
         // gg.togglePanel(t*10);
     }
+    
+    private void circlingTarget(int t) {
+        notifyObservers(t * 10);
+        long t1 = System.currentTimeMillis();
+        setChanged();
+        // gg.togglePanel(t*10);
+        System.out.println("T on P" + t * 10 + " toggled");
+        try {
 
-    @Override
-    public void run() {
-        running = true;
-        Random r = new Random();
-        while (running) {
-            runGridGame();
-            if (movingTarget) {
-                moveTarget(r.nextInt(5) + 1);
-            }
+            TimeUnit.SECONDS.sleep(targetHopTime);
+        } catch (InterruptedException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
         }
-    }
-
-    private void runGridGame() {
-        int action = -1;
-        while(!world.endState()) {
-            action = policy.getBestAction(world.getState());
-            
-            notifyObservers(world.getNextState(action));
-            
-            
-        }
-        
+        notifyObservers(t * 10);
+        long t2 = System.currentTimeMillis();
+        setChanged();
+        System.out.println("Time Passed: " + (t2 - t1) / 1000 + "s");
+        // gg.togglePanel(t*10);
     }
 
     public void reset() {
