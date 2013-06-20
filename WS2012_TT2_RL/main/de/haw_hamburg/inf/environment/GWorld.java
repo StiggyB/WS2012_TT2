@@ -5,11 +5,18 @@ import java.util.Observer;
 
 import de.haw_hamburg.inf.rl.RLWorld;
 
-public class GWorld implements RLWorld, Observer {
+/**
+ * TODO Muss state aktualisiert werden?
+ * 
+ * @author Benjamin
+ * 
+ */
+public class GWorld implements Observer {
 
     // dimension: { x, y, actions }
     private int[]     dimension     = { 10, 5, 4 };
     private int[]     startingState = { 0, 0 };
+    private int[]     endingState   = { 9, 4 };
     private int[]     state;
     private int[]     finalState    = { dimension[0] - 1,
             dimension[1] - 1       };
@@ -30,18 +37,20 @@ public class GWorld implements RLWorld, Observer {
         this.dimension = dimension;
     }
 
-    @Override
     public int[] getDimension() {
         return dimension;
     }
 
-    @Override
     public int[] getNextState(int action) {
 
+        int a = action;
         int[] newState = new int[startingState.length];
         System.arraycopy(state, 0, newState, 0, state.length);
 
-        switch (action) {
+        if (!validAction(action))
+            a = -1;
+
+        switch (a) {
             case N:
                 newState[1]--;
                 calculateReward(newState);
@@ -58,56 +67,89 @@ public class GWorld implements RLWorld, Observer {
                 newState[0]--;
                 calculateReward(newState);
                 break;
+            default:
+                // no change
+                break;
         }
+        System.arraycopy(newState, 0, state, 0, state.length);
         return newState;
     }
 
     private void calculateReward(int[] newState) {
         if (newState == finalState) {
-            currentReward += 100;
+            currentReward = 100;
         } else {
-            currentReward += -1;
+            currentReward = -1;
         }
     }
 
-    @Override
     public double getReward() {
         return currentReward;
     }
 
-    @Override
     public boolean validAction(int action) {
-        switch (action) {
-            case N:
-                if ((state[1] == 0))
-                    return false;
-            case E:
-                if ((state[0] == dimension[0] - 1))
-                    return false;
-            case S:
-                if ((state[1] == dimension[0] - 1))
-                    return false;
-            case W:
-                if ((state[0] == 0))
-                    return false;
-        }
-        return true;
+        // West border
+        if (state[0] == 0 && action == W)
+            return false;
+        // East border
+        else if (state[0] == dimension[0] - 1 && action == E)
+            return false;
+        // North border
+        else if (state[1] == 0 && action == N)
+            return false;
+        // South border
+        else if (state[1] == dimension[1] - 1 && action == S)
+            return false;
+        else
+            return true;
+        // switch (action) {
+        // case N:
+        // if ((state[1] == 0))
+        // System.out.println("North not valid in state " +
+        // Arrays.toString(state) + ", because y=" + state[1]);
+        // return false;
+        // case E:
+        // if ((state[0] == dimension[0] - 1))
+        // System.out.println("East not valid in state " +
+        // Arrays.toString(state) + ", because x=" + state[0]);
+        // return false;
+        // case S:
+        // if ((state[1] == dimension[0] - 1))
+        // System.out.println("South not valid in state " +
+        // Arrays.toString(state) + ", because y=" + state[1]);
+        // return false;
+        // case W:
+        // if ((state[0] == 0))
+        // System.out.println("West not valid in state " +
+        // Arrays.toString(state) + ", because x=" + state[0]);
+        // return false;
+        // }
+        // System.out.println("VALID ACTION: " + action);
+        // return true;
     }
 
-    @Override
-    public boolean endState() {
-        return (state[0] == dimension[0] - 1 && state[1] == dimension[0] - 1);
+    public boolean endState(int[] state) {
+        return state == endingState;
     }
 
-    @Override
+    public int[] getEndState() {
+        return endingState;
+    }
+
     public int[] resetState() {
         return state = startingState;
     }
 
-    @Override
     public double getInitValues() {
-        // TODO for what values?
         return 0;
+    }
+
+    public int[] getState() {
+        return state;
+    }
+
+    public void setState(int[] state) {
+        this.state = state;
     }
 
     @Override
@@ -115,10 +157,4 @@ public class GWorld implements RLWorld, Observer {
         // TODO Target update method
 
     }
-
-    public int[] getState() {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
 }

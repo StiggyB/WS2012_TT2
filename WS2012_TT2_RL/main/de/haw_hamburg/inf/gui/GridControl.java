@@ -5,56 +5,47 @@ import java.util.Random;
 import java.util.concurrent.TimeUnit;
 
 import de.haw_hamburg.inf.environment.GWorld;
+import de.haw_hamburg.inf.rl.Agent;
 import de.haw_hamburg.inf.rl.RLPolicy;
 
 public class GridControl extends Observable implements Runnable {
 
-    private volatile boolean running       = false;
-    private volatile int     targetHopTime = 2;
-    private boolean          movingTarget  = false;
-    private RLPolicy         policy;
+    private volatile boolean running        = false;
+    private volatile int     targetHopTime  = 2;
+    private boolean          movingTarget   = false;
+    private boolean          circlingTarget = false;
+
+    private Agent            agent;
     private GWorld           world;
 
-    public GridControl(GWorld world, RLPolicy policy) {
+    public GridControl(GWorld world, Agent agent) {
         this.world = world;
-        this.policy = policy;
+        this.agent = agent;
     }
-
-    @Override
-    protected synchronized void setChanged() {
-        super.setChanged();
-    }
-
-
 
     @Override
     public void run() {
         running = true;
         Random r = new Random();
-        int t = 1;
+        int t = 0;
         while (running) {
-            runGridGame();
             if (movingTarget) {
                 randomTarget(r.nextInt(5) + 1);
-            } else {
-                circlingTarget(t++);
-                t = t >= 5 ? 1 : t;
+            } else if (circlingTarget) {
+                circlingTarget(++t);
+                t = t >= 5 ? 0 : t;
             }
+            agent.qLearn();
+            runGridGame();
+            running = false;
         }
     }
 
     private void runGridGame() {
-        int action = -1;
-        while(!world.endState()) {
-            action = policy.getBestAction(world.getState());
-            
-            notifyObservers(world.getNextState(action));
-            
-            
-        }
-        
+//        while (!world.endState()) {
+//        }
     }
-    
+
     private void randomTarget(int t) {
         notifyObservers(t * 10);
         long t1 = System.currentTimeMillis();
@@ -74,7 +65,7 @@ public class GridControl extends Observable implements Runnable {
         System.out.println("Time Passed: " + (t2 - t1) / 1000 + "s");
         // gg.togglePanel(t*10);
     }
-    
+
     private void circlingTarget(int t) {
         notifyObservers(t * 10);
         long t1 = System.currentTimeMillis();
@@ -121,5 +112,20 @@ public class GridControl extends Observable implements Runnable {
 
     public void setMovingTarget(boolean movingTarget) {
         this.movingTarget = movingTarget;
+    }
+
+    /**
+     * @return the circlingTarget
+     */
+    protected boolean hasCirclingTarget() {
+        return circlingTarget;
+    }
+
+    /**
+     * @param circlingTarget
+     *            the circlingTarget to set
+     */
+    protected void setCirclingTarget(boolean circlingTarget) {
+        this.circlingTarget = circlingTarget;
     }
 }
