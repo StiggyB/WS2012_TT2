@@ -36,8 +36,6 @@ public class GridGUI implements Observer {
     JPanel[][]                grid;
 
     private int[]             dimension   = { 10, 5, 4 };
-    private int               xDim        = dimension[0];
-    private int               yDim        = dimension[1];
     private GWorld            gw          = new GWorld(dimension);
     private Agent             agent       = new Agent(gw);
     private GridControl       gc          = new GridControl(gw, agent);
@@ -57,7 +55,6 @@ public class GridGUI implements Observer {
             public void run() {
                 try {
                     window = new GridGUI();
-
                     window.frame.setVisible(true);
                 } catch (Exception e) {
                     e.printStackTrace();
