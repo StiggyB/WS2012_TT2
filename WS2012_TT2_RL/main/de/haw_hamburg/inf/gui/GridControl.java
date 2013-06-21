@@ -6,7 +6,6 @@ import java.util.concurrent.TimeUnit;
 
 import de.haw_hamburg.inf.environment.GWorld;
 import de.haw_hamburg.inf.rl.Agent;
-import de.haw_hamburg.inf.rl.RLPolicy;
 
 public class GridControl extends Observable implements Runnable {
 
@@ -14,6 +13,7 @@ public class GridControl extends Observable implements Runnable {
     private volatile int     targetHopTime  = 2;
     private boolean          movingTarget   = false;
     private boolean          circlingTarget = false;
+    private int              episodes       = 1;
 
     private Agent            agent;
     private GWorld           world;
@@ -29,21 +29,23 @@ public class GridControl extends Observable implements Runnable {
         Random r = new Random();
         int t = 0;
         while (running) {
-            if (movingTarget) {
-                randomTarget(r.nextInt(5) + 1);
-            } else if (circlingTarget) {
-                circlingTarget(++t);
-                t = t >= 5 ? 0 : t;
+            for (int i = 0; i < episodes; i++) {
+                if (!running)
+                    break;
+                if (movingTarget) {
+                    randomTarget(r.nextInt(5) + 1);
+                } else if (circlingTarget) {
+                    circlingTarget(++t);
+                    t = t >= 5 ? 0 : t;
+                }
+                agent.qLearn();
+                agent.resetAgent();
             }
-            agent.qLearn();
-            runGridGame();
+            agent.printQvalues();
             running = false;
+            notifyObservers(-1);
+            setChanged();
         }
-    }
-
-    private void runGridGame() {
-//        while (!world.endState()) {
-//        }
     }
 
     private void randomTarget(int t) {
@@ -56,7 +58,6 @@ public class GridControl extends Observable implements Runnable {
 
             TimeUnit.SECONDS.sleep(targetHopTime);
         } catch (InterruptedException e) {
-            // TODO Auto-generated catch block
             e.printStackTrace();
         }
         notifyObservers(t * 10);
@@ -66,8 +67,13 @@ public class GridControl extends Observable implements Runnable {
         // gg.togglePanel(t*10);
     }
 
+    /**
+     * TODO t in range from 0 to 4 not 10 to 50...
+     * @param t
+     */
     private void circlingTarget(int t) {
         notifyObservers(t * 10);
+        world.setTarget(t);
         long t1 = System.currentTimeMillis();
         setChanged();
         // gg.togglePanel(t*10);
@@ -76,7 +82,6 @@ public class GridControl extends Observable implements Runnable {
 
             TimeUnit.SECONDS.sleep(targetHopTime);
         } catch (InterruptedException e) {
-            // TODO Auto-generated catch block
             e.printStackTrace();
         }
         notifyObservers(t * 10);
@@ -86,11 +91,8 @@ public class GridControl extends Observable implements Runnable {
         // gg.togglePanel(t*10);
     }
 
-    public void reset() {
-        running = true;
-    }
 
-    public void terminate() {
+    public synchronized void terminate() {
         running = false;
     }
 
@@ -127,5 +129,20 @@ public class GridControl extends Observable implements Runnable {
      */
     protected void setCirclingTarget(boolean circlingTarget) {
         this.circlingTarget = circlingTarget;
+    }
+
+    /**
+     * @return the episodes
+     */
+    protected int getEpisodes() {
+        return episodes;
+    }
+
+    /**
+     * @param episodes
+     *            the episodes to set
+     */
+    protected void setEpisodes(int episodes) {
+        this.episodes = episodes;
     }
 }

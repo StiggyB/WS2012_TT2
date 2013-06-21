@@ -1,23 +1,16 @@
 package de.haw_hamburg.inf.environment;
 
-import java.util.Observable;
-import java.util.Observer;
-
-import de.haw_hamburg.inf.rl.RLWorld;
-
 /**
  * TODO Muss state aktualisiert werden?
  * 
  * @author Benjamin
  * 
  */
-public class GWorld implements Observer {
+public class GWorld {
 
     // dimension: { x, y, actions }
     private int[]     dimension     = { 10, 5, 4 };
-    private int[]     startingState = { 0, 0 };
-    private int[]     endingState   = { 9, 4 };
-    private int[]     state;
+    private int[]     state         = { 0, 0 };
     private int[]     finalState    = { dimension[0] - 1,
             dimension[1] - 1       };
     private int       currentReward = 0;
@@ -29,11 +22,9 @@ public class GWorld implements Observer {
     private final int W             = 3;
 
     public GWorld() {
-        this.state = startingState;
     }
 
     public GWorld(int[] dimension) {
-        this.state = startingState;
         this.dimension = dimension;
     }
 
@@ -44,7 +35,7 @@ public class GWorld implements Observer {
     public int[] getNextState(int action) {
 
         int a = action;
-        int[] newState = new int[startingState.length];
+        int[] newState = new int[state.length];
         System.arraycopy(state, 0, newState, 0, state.length);
 
         if (!validAction(action))
@@ -102,59 +93,27 @@ public class GWorld implements Observer {
             return false;
         else
             return true;
-        // switch (action) {
-        // case N:
-        // if ((state[1] == 0))
-        // System.out.println("North not valid in state " +
-        // Arrays.toString(state) + ", because y=" + state[1]);
-        // return false;
-        // case E:
-        // if ((state[0] == dimension[0] - 1))
-        // System.out.println("East not valid in state " +
-        // Arrays.toString(state) + ", because x=" + state[0]);
-        // return false;
-        // case S:
-        // if ((state[1] == dimension[0] - 1))
-        // System.out.println("South not valid in state " +
-        // Arrays.toString(state) + ", because y=" + state[1]);
-        // return false;
-        // case W:
-        // if ((state[0] == 0))
-        // System.out.println("West not valid in state " +
-        // Arrays.toString(state) + ", because x=" + state[0]);
-        // return false;
-        // }
-        // System.out.println("VALID ACTION: " + action);
-        // return true;
     }
 
     public boolean endState(int[] state) {
-        return state == endingState;
+        return state[0] == finalState[0] && state[1] == finalState[1];
     }
 
     public int[] getEndState() {
-        return endingState;
+        return finalState;
     }
 
-    public int[] resetState() {
-        return state = startingState;
+    public void resetState() {
+        state[0] = 0;
+        state[1] = 0;
     }
 
     public double getInitValues() {
         return 0;
     }
 
-    public int[] getState() {
-        return state;
-    }
-
-    public void setState(int[] state) {
-        this.state = state;
-    }
-
-    @Override
-    public void update(Observable o, Object arg) {
-        // TODO Target update method
-
+    public synchronized void setTarget(int t) {
+        finalState[0] = 9;
+        finalState[1] = t - 1;
     }
 }

@@ -12,19 +12,22 @@ import java.awt.event.MouseEvent;
 import java.util.Observable;
 import java.util.Observer;
 
+import javax.swing.ButtonGroup;
+import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JRadioButton;
+import javax.swing.JSlider;
 import javax.swing.JTextField;
 import javax.swing.JToggleButton;
 import javax.swing.SwingConstants;
 import javax.swing.border.LineBorder;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 
 import de.haw_hamburg.inf.environment.GWorld;
 import de.haw_hamburg.inf.rl.Agent;
-import de.haw_hamburg.inf.rl.RLPolicy;
-import javax.swing.ButtonGroup;
 
 public class GridGUI implements Observer {
 
@@ -44,8 +47,9 @@ public class GridGUI implements Observer {
      */
     static GridGUI            window;
     private JTextField        txtTargethoptime;
+    private JToggleButton     btnStart;
     private final ButtonGroup buttonGroup = new ButtonGroup();
-    private int[]             agentPos    = new int[2];
+    private int[]             agentPos    = { 0, 0 };
 
     public static void main(String[] args) {
 
@@ -114,7 +118,6 @@ public class GridGUI implements Observer {
         int x, y, i, l = 0;
         for (y = 0; y < dimension[1]; y++) {
             for (x = 0; x < dimension[0]; x++) {
-                System.out.println("grid[" + x + "]" + "[" + y + "]");
                 grid[x][y] = new JPanel();
                 grid[x][y].setLayout(null);
                 grid[x][y].setForeground(Color.BLACK);
@@ -138,27 +141,8 @@ public class GridGUI implements Observer {
             }
         }
 
-        final JToggleButton btnStartRandomTarget = new JToggleButton(
-                "Random target");
-        // btnStartRandomTarget.setBackground(Color.GREEN);
-
-        btnStartRandomTarget.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent e) {
-                gc.setMovingTarget(true);
-                if (!gc.isRunning()) {
-                    // btnStartRandomTarget.setBackground(Color.RED);
-                    btnStartRandomTarget
-                            .setText("Stop random target");
-                } else {
-                    gc.terminate();
-                    // btnStartRandomTarget.setBackground(Color.GREEN);
-                    btnStartRandomTarget
-                            .setText("Start random target");
-                }
-            }
-        });
-        btnStartRandomTarget.setBounds(12, 256, 162, 25);
-        frame.getContentPane().add(btnStartRandomTarget);
+        // agentPos: BLUE
+        grid[agentPos[0]][agentPos[1]].setBackground(Color.BLUE);
 
         txtTargethoptime = new JTextField();
         txtTargethoptime.addActionListener(new ActionListener() {
@@ -169,26 +153,29 @@ public class GridGUI implements Observer {
         });
         txtTargethoptime.setHorizontalAlignment(SwingConstants.RIGHT);
         txtTargethoptime.setText("2");
-        txtTargethoptime.setBounds(422, 301, 59, 22);
+        txtTargethoptime.setBounds(383, 311, 59, 22);
         frame.getContentPane().add(txtTargethoptime);
         txtTargethoptime.setColumns(10);
 
         JLabel lblTargetHopTime = new JLabel("Target hop Time");
-        lblTargetHopTime.setBounds(422, 282, 116, 16);
+        lblTargetHopTime.setBounds(383, 288, 116, 16);
         frame.getContentPane().add(lblTargetHopTime);
 
         JLabel lblSeconds = new JLabel("Seconds");
-        lblSeconds.setBounds(482, 304, 56, 16);
+        lblSeconds.setBounds(454, 314, 56, 16);
         frame.getContentPane().add(lblSeconds);
 
-        final JToggleButton btnStart = new JToggleButton("Start");
+        btnStart = new JToggleButton("Start");
         btnStart.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
                 if (btnStart.isSelected()) {
                     btnStart.setText("Stop");
-                    gc.reset();
                     gc.addObserver(window);
                     agent.addObserver(window);
+                    agent.setExplorationRate(Integer
+                            .parseInt(txtExploration.getText()));
+                    gc.setEpisodes(Integer.parseInt(txtEpisodes
+                            .getText()));
                     Thread t = new Thread(gc);
                     t.start();
                 } else {
@@ -197,7 +184,7 @@ public class GridGUI implements Observer {
                 }
             }
         });
-        btnStart.setBounds(12, 300, 97, 25);
+        btnStart.setBounds(522, 310, 97, 25);
         frame.getContentPane().add(btnStart);
 
         JRadioButton rdbtnFixedTarget = new JRadioButton(
@@ -223,6 +210,113 @@ public class GridGUI implements Observer {
         });
         rdbtnCirclingTarget.setBounds(248, 310, 127, 25);
         frame.getContentPane().add(rdbtnCirclingTarget);
+
+        txtEpisodes = new JTextField();
+        txtEpisodes.setHorizontalAlignment(SwingConstants.RIGHT);
+        txtEpisodes.setText("1");
+        txtEpisodes.setBounds(80, 13, 156, 16);
+        frame.getContentPane().add(txtEpisodes);
+        txtEpisodes.setColumns(10);
+
+        JLabel lblEpisodes = new JLabel("Episodes");
+        lblEpisodes.setBounds(12, 13, 56, 16);
+        frame.getContentPane().add(lblEpisodes);
+
+        txtAlpha = new JTextField();
+        txtAlpha.setText("1");
+        txtAlpha.setHorizontalAlignment(SwingConstants.RIGHT);
+        txtAlpha.setBounds(80, 42, 156, 16);
+        frame.getContentPane().add(txtAlpha);
+        txtAlpha.setColumns(10);
+
+        JLabel lblAlpha = new JLabel("Alpha");
+        lblAlpha.setBounds(12, 42, 56, 16);
+        frame.getContentPane().add(lblAlpha);
+
+        txtGamma = new JTextField();
+        txtGamma.setText("0.9");
+        txtGamma.setHorizontalAlignment(SwingConstants.RIGHT);
+        txtGamma.setBounds(80, 71, 156, 16);
+        frame.getContentPane().add(txtGamma);
+        txtGamma.setColumns(10);
+
+        JLabel lblGamma = new JLabel("Gamma");
+        lblGamma.setBounds(12, 71, 56, 16);
+        frame.getContentPane().add(lblGamma);
+
+        JSlider sliderSpeed = new JSlider();
+        sliderSpeed.addChangeListener(new ChangeListener() {
+            public void stateChanged(ChangeEvent e) {
+                JSlider source = (JSlider) e.getSource();
+                if (!source.getValueIsAdjusting()) {
+                    int speed = (int) source.getValue();
+                    agent.setLearningSpeed(speed * 100);
+                }
+            }
+        });
+        sliderSpeed.setValue(0);
+        sliderSpeed.setMinorTickSpacing(1);
+        sliderSpeed.setMaximum(20);
+        sliderSpeed.setBounds(12, 129, 224, 26);
+        frame.getContentPane().add(sliderSpeed);
+
+        JLabel lblLearningSpeed = new JLabel("Learning speed");
+        lblLearningSpeed.setBounds(12, 100, 97, 16);
+        frame.getContentPane().add(lblLearningSpeed);
+
+        JLabel lblNumberOfSteps = new JLabel(
+                "Number of steps in best Episode:");
+        lblNumberOfSteps.setBounds(12, 168, 206, 16);
+        frame.getContentPane().add(lblNumberOfSteps);
+
+        txtSteps = new JTextField();
+        txtSteps.setHorizontalAlignment(SwingConstants.CENTER);
+        txtSteps.setText(Integer.toString(Integer.MAX_VALUE));
+        txtSteps.setEditable(false);
+        txtSteps.setBounds(12, 197, 97, 16);
+        frame.getContentPane().add(txtSteps);
+        txtSteps.setColumns(10);
+        txtSteps.setVisible(false);
+
+        JButton btnResetLearning = new JButton("Reset learning");
+        btnResetLearning.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                gc.terminate();
+                gw.resetState();
+                agent.resetAgent();
+                agent.resetLearning();
+                btnStart.setText("Start");
+                btnStart.setSelected(false);
+            }
+        });
+        btnResetLearning.setBounds(631, 310, 139, 25);
+        frame.getContentPane().add(btnResetLearning);
+
+        txtExploration = new JTextField();
+        txtExploration.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                agent.setExplorationRate(Integer
+                        .parseInt(txtExploration.getText()));
+            }
+        });
+        txtExploration.setHorizontalAlignment(SwingConstants.RIGHT);
+        txtExploration.setText("15");
+        txtExploration.setBounds(121, 259, 97, 16);
+        frame.getContentPane().add(txtExploration);
+        txtExploration.setColumns(10);
+
+        JLabel lblExplorationRate = new JLabel("Exploration rate");
+        lblExplorationRate.setBounds(12, 259, 97, 16);
+        frame.getContentPane().add(lblExplorationRate);
+
+        JLabel label = new JLabel("%");
+        label.setBounds(219, 259, 12, 16);
+        frame.getContentPane().add(label);
+
+        lblBest = new JLabel("best (= 13) after ");
+        lblBest.setVerticalAlignment(SwingConstants.TOP);
+        lblBest.setBounds(12, 226, 224, 16);
+        frame.getContentPane().add(lblBest);
     }
 
     /**
@@ -291,9 +385,7 @@ public class GridGUI implements Observer {
     }
 
     private void turnOtherPanelOff() {
-        System.out.println(grid[9].length);
         for (int y = 0; y < grid[9].length; y++) {
-            System.out.println(grid[9][y].getName());
             if (grid[9][y].getComponent(4).isEnabled()) {
                 grid[9][y].getComponent(4).setEnabled(false);
             }
@@ -304,18 +396,54 @@ public class GridGUI implements Observer {
         return frame;
     }
 
+    Color              savedColor     = Color.WHITE;
+    private JTextField txtEpisodes;
+    private JTextField txtAlpha;
+    private JTextField txtGamma;
+    private int        stepCounter    = 0;
+    private JTextField txtSteps;
+    private JTextField txtExploration;
+    private int        episodeCounter = 0;
+    private boolean    bestWay;
+    private JLabel     lblBest;
+
     @Override
     public void update(Observable o, Object arg) {
-        System.out.println("NOTIFY");
         if (o instanceof GridControl) {
             togglePanel((int) arg);
+            if ((int) arg == -1) {
+                btnStart.setText("Start");
+                btnStart.setSelected(false);
+            }
         } else {
             moveAgent((int[]) arg);
+            if (((Agent) o).episodeEnded()) {
+                savedColor = Color.WHITE;
+                grid[9][4].setBackground(Color.GREEN);
+                System.out.println(">>>>>>>>>>>>>>>>>>>>>>>>>STEPS: "
+                        + stepCounter);
+                if (Integer.parseInt(txtSteps.getText()) > stepCounter) {
+                    txtSteps.setText(Integer.toString(stepCounter));
+                    txtSteps.setVisible(true);
+                } else {
+                    // Steps in last episode
+                }
+                if (stepCounter == 13 && !bestWay) {
+                    bestWay = true;
+                    lblBest.setText(lblBest.getText() + "\n"
+                            + episodeCounter + " episodes");
+                }
+                episodeCounter++;
+                stepCounter = 0;
+            } else {
+                stepCounter++;
+            }
         }
     }
 
     private void moveAgent(int[] arg) {
-        grid[agentPos[0]][agentPos[1]].setBackground(Color.WHITE);
+        grid[agentPos[0]][agentPos[1]].setBackground(savedColor);
+        savedColor = grid[arg[0]][arg[1]].getBackground();
         agentPos = arg;
         grid[arg[0]][arg[1]].setBackground(Color.BLUE);
     }
