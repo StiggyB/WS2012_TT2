@@ -176,4 +176,8 @@ public class Agent extends Observable {
         this.running = running;
     }
 
+	public double[] getQValues(int[] agentPos) {
+		return q[agentPos[0]][agentPos[1]];
+	}
+
 }

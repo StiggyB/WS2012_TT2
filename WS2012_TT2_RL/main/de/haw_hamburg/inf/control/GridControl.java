@@ -1,4 +1,4 @@
-package de.haw_hamburg.inf.gui;
+package de.haw_hamburg.inf.control;
 
 import java.util.Observable;
 import java.util.Random;
@@ -33,10 +33,10 @@ public class GridControl extends Observable implements Runnable {
                 if (!running)
                     break;
                 if (movingTarget) {
-                    randomTarget(r.nextInt(5) + 1);
+                    randomTarget(r.nextInt(5));
                 } else if (circlingTarget) {
-                    circlingTarget(++t);
-                    t = t >= 5 ? 0 : t;
+                    circlingTarget(t++);
+                    t = t >= 4 ? 0 : t;
                 }
                 agent.qLearn();
                 agent.resetAgent();
@@ -49,18 +49,18 @@ public class GridControl extends Observable implements Runnable {
     }
 
     private void randomTarget(int t) {
-        notifyObservers(t * 10);
+        notifyObservers(t);
         long t1 = System.currentTimeMillis();
         setChanged();
         // gg.togglePanel(t*10);
-        System.out.println("T on P" + t * 10 + " toggled");
+        System.out.println("T on P" + t + " toggled");
         try {
 
             TimeUnit.SECONDS.sleep(targetHopTime);
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
-        notifyObservers(t * 10);
+        notifyObservers(t);
         long t2 = System.currentTimeMillis();
         setChanged();
         System.out.println("Time Passed: " + (t2 - t1) / 1000 + "s");
@@ -72,19 +72,19 @@ public class GridControl extends Observable implements Runnable {
      * @param t
      */
     private void circlingTarget(int t) {
-        notifyObservers(t * 10);
+        notifyObservers(t);
         world.setTarget(t);
         long t1 = System.currentTimeMillis();
         setChanged();
         // gg.togglePanel(t*10);
-        System.out.println("T on P" + t * 10 + " toggled");
+        System.out.println("T on P" + t + " toggled");
         try {
 
             TimeUnit.SECONDS.sleep(targetHopTime);
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
-        notifyObservers(t * 10);
+        notifyObservers(t );
         long t2 = System.currentTimeMillis();
         setChanged();
         System.out.println("Time Passed: " + (t2 - t1) / 1000 + "s");
@@ -127,7 +127,7 @@ public class GridControl extends Observable implements Runnable {
      * @param circlingTarget
      *            the circlingTarget to set
      */
-    protected void setCirclingTarget(boolean circlingTarget) {
+    public void setCirclingTarget(boolean circlingTarget) {
         this.circlingTarget = circlingTarget;
     }
 
@@ -142,7 +142,7 @@ public class GridControl extends Observable implements Runnable {
      * @param episodes
      *            the episodes to set
      */
-    protected void setEpisodes(int episodes) {
+    public void setEpisodes(int episodes) {
         this.episodes = episodes;
     }
 }
