@@ -26,6 +26,7 @@ import javax.swing.border.LineBorder;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
+import de.haw_hamburg.inf.control.Grid;
 import de.haw_hamburg.inf.control.GridControl;
 import de.haw_hamburg.inf.environment.GWorld;
 import de.haw_hamburg.inf.rl.Agent;
@@ -39,7 +40,8 @@ public class GridGUI implements Observer {
 	private int[] dimension = { 10, 5, 4 };
 	private GWorld gw = new GWorld(dimension);
 	private Agent agent = new Agent(gw);
-	private GridControl gc = new GridControl(gw, agent);
+	private Grid gridc = new Grid(gw);
+	private GridControl gc = new GridControl(agent, gridc);
 
 	/**
 	 * Launch the application.
@@ -147,7 +149,7 @@ public class GridGUI implements Observer {
 		txtTargethoptime = new JTextField();
 		txtTargethoptime.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				gc.setTargetHopTime(Integer.parseInt(txtTargethoptime.getText()));
+				gridc.setTargetHopTime(Integer.parseInt(txtTargethoptime.getText()));
 			}
 		});
 		txtTargethoptime.setHorizontalAlignment(SwingConstants.RIGHT);
@@ -189,8 +191,8 @@ public class GridGUI implements Observer {
 		buttonGroup.add(rdbtnFixedTarget);
 		rdbtnFixedTarget.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				gc.setMovingTarget(false);
-				gc.setCirclingTarget(false);
+				gridc.setMovingTarget(false);
+				gridc.setCirclingTarget(false);
 			}
 		});
 		rdbtnFixedTarget.setBounds(248, 284, 127, 25);
@@ -201,7 +203,7 @@ public class GridGUI implements Observer {
 		buttonGroup.add(rdbtnCirclingTarget);
 		rdbtnCirclingTarget.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				gc.setCirclingTarget(true);
+				gridc.setCirclingTarget(true);
 			}
 		});
 		rdbtnCirclingTarget.setBounds(248, 310, 127, 25);
@@ -410,6 +412,10 @@ public class GridGUI implements Observer {
 			if (((Agent) o).episodeEnded()) {
 				savedColor = Color.WHITE;
 				grid[9][4].setBackground(Color.GREEN);
+				grid[9][3].setBackground(Color.GREEN);
+				grid[9][2].setBackground(Color.GREEN);
+				grid[9][1].setBackground(Color.GREEN);
+				grid[9][0].setBackground(Color.GREEN);
 				System.out.println(">>>>>>>>>>>>>>>>>>>>>>>>>STEPS: "
 						+ stepCounter);
 				if (Integer.parseInt(txtSteps.getText()) > stepCounter) {

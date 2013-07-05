@@ -14,6 +14,8 @@ public class GWorld {
     private int[]     finalState    = { dimension[0] - 1,
             dimension[1] - 1       };
     private int       currentReward = 0;
+    private final int x             = 0;
+    private final int y             = 1;
 
     // Actions.
     private final int N             = 0;
@@ -43,19 +45,19 @@ public class GWorld {
 
         switch (a) {
             case N:
-                newState[1]--;
+                newState[y]--;
                 calculateReward(newState);
                 break;
             case E:
-                newState[0]++;
+                newState[x]++;
                 calculateReward(newState);
                 break;
             case S:
-                newState[1]++;
+                newState[y]++;
                 calculateReward(newState);
                 break;
             case W:
-                newState[0]--;
+                newState[x]--;
                 calculateReward(newState);
                 break;
             default:
@@ -70,6 +72,11 @@ public class GWorld {
         if (newState == finalState) {
             currentReward = 100;
         } else {
+            for (int i = 0; i < dimension[1]; i++) {
+                if (i == newState[y]) {
+                    currentReward = 0;
+                }
+            }
             currentReward = -1;
         }
     }
@@ -80,23 +87,23 @@ public class GWorld {
 
     public boolean validAction(int action) {
         // West border
-        if (state[0] == 0 && action == W)
+        if (state[x] == 0 && action == W)
             return false;
         // East border
-        else if (state[0] == dimension[0] - 1 && action == E)
+        else if (state[x] == dimension[x] - 1 && action == E)
             return false;
         // North border
-        else if (state[1] == 0 && action == N)
+        else if (state[y] == 0 && action == N)
             return false;
         // South border
-        else if (state[1] == dimension[1] - 1 && action == S)
+        else if (state[y] == dimension[y] - 1 && action == S)
             return false;
         else
             return true;
     }
 
     public boolean endState(int[] state) {
-        return state[0] == finalState[0] && state[1] == finalState[1];
+        return state[x] == finalState[x] && state[y] == finalState[y];
     }
 
     public int[] getEndState() {
@@ -104,8 +111,8 @@ public class GWorld {
     }
 
     public void resetState() {
-        state[0] = 0;
-        state[1] = 0;
+        state[x] = 0;
+        state[y] = 0;
     }
 
     public double getInitValues() {
@@ -113,7 +120,7 @@ public class GWorld {
     }
 
     public synchronized void setTarget(int t) {
-        finalState[0] = 9;
-        finalState[1] = t - 1;
+        finalState[x] = 9;
+        finalState[y] = t;// - 1;
     }
 }
