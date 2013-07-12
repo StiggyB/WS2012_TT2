@@ -18,15 +18,54 @@ public class Agent extends Observable {
     private int          explorationRate = 15;
     private long         learningSpeed   = 0;
     private boolean      episodeEnded;
-    private boolean      running = false;
+    private boolean      running         = false;
+    private double[]     totalReward;
+    private int          episode         = 0;
 
     public Agent(GWorld gw) {
         this.world = gw;
         this.dimension = gw.getDimension();
-
         q = new double[dimension[0]][dimension[1]][dimension[2]];
         alpha = 1;
         gamma = 0.9;
+    }
+
+    public enum Orientation {
+        N(0), E(1), S(2), W(3), X(-1);
+        int o;
+
+        Orientation(int o) {
+            this.o = o;
+        }
+
+        public static Orientation of(int i) {
+            Orientation o = null;
+            switch (i) {
+                case 0:
+                    o = N;
+                    break;
+                case 1:
+                    o = E;
+                    break;
+                case 2:
+                    o = S;
+                    break;
+                case 3:
+                    o = W;
+                    break;
+                case -1:
+                    o = X;
+                    break;
+                default:
+                    o = X;
+                    break;
+            }
+            return o;
+        }
+
+        public int value() {
+            return this.o;
+        }
     }
 
     // Q(s,a)=
@@ -35,20 +74,25 @@ public class Agent extends Observable {
     public void qLearn() {
         int[] nextState;
         double actualQ, maxQ, newQ;
-        int action;
-        episodeEnded = false; running = true;
+        Orientation action;
+        episodeEnded = false;
+        running = true;
         do {
             action = selectAction(state);
-            nextState = world.getNextState(action);
-            actualQ = getQValueOf(state, action);
+            nextState = world.getNextState(action.value());
+            actualQ = getQValueOf(state, action.value());
             maxQ = getMaxQValueOf(nextState);
             // Q-LEARNING ALGORITHM
             newQ = actualQ + alpha
                     * (world.getReward() + gamma * maxQ - actualQ);
-            System.out.println("In state " + Arrays.toString(state)
-                    + " took action " + action + " going to state "
-                    + Arrays.toString(nextState));
-            setQValue(state, action, newQ);
+            setTotalReward(episode, getTotalReward()[episode]
+                    + world.getReward());
+            System.out
+                    .println("In state " + Arrays.toString(state)
+                            + " took action " + action.name()
+                            + " going to state "
+                            + Arrays.toString(nextState));
+            setQValue(state, action.value(), newQ);
             state = nextState;
             try {
                 TimeUnit.MILLISECONDS.sleep(learningSpeed);
@@ -59,21 +103,23 @@ public class Agent extends Observable {
             notifyObservers(state);
             setChanged();
         } while (!world.endState(state) && running);
+        episode++;
         episodeEnded = true;
         System.out.println("######### ENDED LEARNING #########");
     }
 
-    private int selectAction(int[] state) {
+    private Orientation selectAction(int[] state) {
         double maxQ = -Double.MAX_VALUE;
         int[] dupes = new int[q[state[0]][state[1]].length];
-        int selectedAction = -1;
+        Orientation selectedAction = Orientation.X;
         Random r = new Random();
         int exploration = r.nextInt(100) + 1;
         int dupeIdx = 0;
-        System.out.printf("State[%d][%d]: %s",state[0],state[1], Arrays.toString(q[state[0]][state[1]]));
+        System.out.printf("State[%d][%d]: %s", state[0], state[1],
+                Arrays.toString(q[state[0]][state[1]]));
         for (int action = 0; action < q[state[0]][state[1]].length; action++) {
             if (q[state[0]][state[1]][action] > maxQ) {
-                selectedAction = action;
+                selectedAction = Orientation.of(action);
                 maxQ = q[state[0]][state[1]][action];
                 dupeIdx = 0;
                 dupes[dupeIdx] = action;
@@ -84,8 +130,11 @@ public class Agent extends Observable {
 
         if (dupeIdx > 0) {
             System.out.print(" - dupes: " + dupeIdx + " -");
-            selectedAction = dupes[r.nextInt(dupeIdx)];
+            selectedAction = Orientation
+                    .of(dupes[r.nextInt(dupeIdx)]);
         }
+        notifyObservers(selectedAction);
+        setChanged();
 
         if (exploration > (100 - explorationRate)) {
             System.out.print(" - WITH EXPLORATION -");
@@ -93,8 +142,8 @@ public class Agent extends Observable {
             do {
                 exploreAction = r
                         .nextInt(q[state[0]][state[1]].length);
-            } while (exploreAction == selectedAction);
-            selectedAction = exploreAction;
+            } while (exploreAction == selectedAction.value());
+            selectedAction = Orientation.of(exploreAction);
         }
         System.out.println(" took action: " + selectedAction);
         return selectedAction;
@@ -109,7 +158,6 @@ public class Agent extends Observable {
         for (int i = 0; i < q[nextState[0]][nextState[1]].length; i++) {
             qVal = q[nextState[0]][nextState[1]][i] > qVal ? q[nextState[0]][nextState[1]][i]
                     : qVal;
-
         }
         return qVal;
     }
@@ -136,6 +184,12 @@ public class Agent extends Observable {
                 System.out.printf("[%d][%d]:%s\n", x, y, Arrays
                         .toString(q[x][y]));
             }
+        }
+        for (int i = 0; i < totalReward.length; i++) {
+            System.out.println(i);
+        }
+        for (int i = 0; i < totalReward.length; i++) {
+            System.out.println(getTotalReward()[i]);
         }
     }
 
@@ -170,14 +224,39 @@ public class Agent extends Observable {
     }
 
     /**
-     * @param running the running to set
+     * @param running
+     *            the running to set
      */
     public void setRunning(boolean running) {
         this.running = running;
     }
 
-	public double[] getQValues(int[] agentPos) {
-		return q[agentPos[0]][agentPos[1]];
-	}
+    public double[] getQValues(int[] agentPos) {
+        return q[agentPos[0]][agentPos[1]];
+    }
+
+    public void setAlpha(double alpha) {
+        this.alpha = alpha;
+    }
+
+    public void setGamma(double gamma) {
+        this.gamma = gamma;
+    }
+
+    public double[] getTotalReward() {
+        return totalReward;
+    }
+
+    private void setTotalReward(int episode, double totalReward) {
+        this.totalReward[episode] = totalReward;
+    }
+
+    public void setGlobalEpisodes(int globalEpisodes) {
+        totalReward = new double[globalEpisodes];
+    }
+
+    public void setEpisodes(int episode) {
+        this.episode = episode;
+    }
 
 }

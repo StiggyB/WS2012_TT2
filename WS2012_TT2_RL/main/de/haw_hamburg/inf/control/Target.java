@@ -6,16 +6,16 @@ import java.util.concurrent.TimeUnit;
 
 import de.haw_hamburg.inf.environment.GWorld;
 
-public class Grid extends Observable implements Runnable {
+public class Target extends Observable implements Runnable {
 
-    private volatile int targetHopTime  = 2;
-    private boolean      randomTarget   = false;
-    private boolean      circlingTarget = false;
+    private volatile int     targetHopTime  = 2;
+    private boolean          randomTarget   = false;
+    private boolean          circlingTarget = false;
 
-    private GWorld       world;
-    private boolean      running        = false;
+    private GWorld           world;
+    private volatile boolean running        = true;
 
-    public Grid(GWorld world) {
+    public Target(GWorld world) {
         this.world = world;
     }
 
@@ -32,43 +32,35 @@ public class Grid extends Observable implements Runnable {
                 t = t > 4 ? 0 : t;
             }
         }
-
     }
 
     public void cirlceTarget(int t) {
         notifyObservers(t);
         setChanged();
-        long t1 = System.currentTimeMillis();
         world.setTarget(t);
         System.out.println("T on P" + t + " toggled");
         try {
 
-            TimeUnit.SECONDS.sleep(targetHopTime);
+            TimeUnit.MILLISECONDS.sleep(targetHopTime);
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
-        long t2 = System.currentTimeMillis();
         notifyObservers(t);
         setChanged();
-        System.out.println("Time Passed: " + (t2 - t1) / 1000 + "s");
     }
 
     public void randomTarget(int t) {
         notifyObservers(t);
         setChanged();
-        long t1 = System.currentTimeMillis();
         System.out.println("T on P" + t + " toggled");
         try {
 
-            TimeUnit.SECONDS.sleep(targetHopTime);
+            TimeUnit.MILLISECONDS.sleep(targetHopTime);
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
-        long t2 = System.currentTimeMillis();
         notifyObservers(t);
         setChanged();
-        System.out.println("Time Passed: " + (t2 - t1) / 1000 + "s");
-
     }
 
     public int getTargetHopTime() {
@@ -79,7 +71,7 @@ public class Grid extends Observable implements Runnable {
         this.targetHopTime = targetHopTime;
     }
 
-    public boolean hasMovingTarget() {
+    public boolean isMoving() {
         return randomTarget;
     }
 
@@ -90,7 +82,7 @@ public class Grid extends Observable implements Runnable {
     /**
      * @return the circlingTarget
      */
-    protected boolean hasCirclingTarget() {
+    public boolean isCircling() {
         return circlingTarget;
     }
 

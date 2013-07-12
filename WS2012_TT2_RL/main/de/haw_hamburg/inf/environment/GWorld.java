@@ -1,5 +1,7 @@
 package de.haw_hamburg.inf.environment;
 
+import java.util.Arrays;
+
 /**
  * TODO Muss state aktualisiert werden?
  * 
@@ -13,7 +15,7 @@ public class GWorld {
     private int[]     state         = { 0, 0 };
     private int[]     finalState    = { dimension[0] - 1,
             dimension[1] - 1       };
-    private int       currentReward = 0;
+    private double    currentReward = 0;
     private final int x             = 0;
     private final int y             = 1;
 
@@ -22,11 +24,14 @@ public class GWorld {
     private final int E             = 1;
     private final int S             = 2;
     private final int W             = 3;
+    private int[][]   wall;
 
     public GWorld() {
     }
 
     public GWorld(int[] dimension) {
+        wall = new int[dimension[0]][dimension[1]];
+        resetWalls();
         this.dimension = dimension;
     }
 
@@ -60,9 +65,12 @@ public class GWorld {
                 newState[x]--;
                 calculateReward(newState);
                 break;
-            default:
-                // no change
+            case -1:
+                calculateReward(newState);
                 break;
+            default:
+                System.err.println("ACTION ERROR!");
+                throw new IllegalStateException();
         }
         System.arraycopy(newState, 0, state, 0, state.length);
         return newState;
@@ -72,13 +80,15 @@ public class GWorld {
         if (newState == finalState) {
             currentReward = 100;
         } else {
+            currentReward = -1;
             for (int i = 0; i < dimension[1]; i++) {
-                if (i == newState[y]) {
-                    currentReward = 0;
+                if (i == newState[y]
+                        && newState[x] == dimension[x] - 1) {
+                    currentReward = -0.5;
                 }
             }
-            currentReward = -1;
         }
+        System.out.println("World-REWARD: " + currentReward);
     }
 
     public double getReward() {
@@ -97,6 +107,19 @@ public class GWorld {
             return false;
         // South border
         else if (state[y] == dimension[y] - 1 && action == S)
+            return false;
+        // Wall
+        else if (state[x] != dimension[x] - 1
+                && wall[state[x] + 1][state[y]] == -1 && action == E)
+            return false;
+        else if (state[y] != dimension[y] - 1
+                && wall[state[x]][state[y] + 1] == -1 && action == S)
+            return false;
+        else if (state[x] != 0 && wall[state[x] - 1][state[y]] == -1
+                && action == W)
+            return false;
+        else if (state[y] != 0 && wall[state[x]][state[y] - 1] == -1
+                && action == N)
             return false;
         else
             return true;
@@ -121,6 +144,20 @@ public class GWorld {
 
     public synchronized void setTarget(int t) {
         finalState[x] = 9;
-        finalState[y] = t;// - 1;
+        finalState[y] = t;
     }
+
+    public synchronized void setWall(int x, int y) {
+        wall[x][y] = -1;
+    }
+
+    public synchronized void unSetWall(int x, int y) {
+        wall[x][y] = 0;
+    }
+
+    public synchronized void resetWalls() {
+        Arrays.fill(wall[x], 0);
+        Arrays.fill(wall[y], 0);
+    }
+
 }

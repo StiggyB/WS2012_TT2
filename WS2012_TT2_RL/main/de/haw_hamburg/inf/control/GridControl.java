@@ -6,32 +6,33 @@ import de.haw_hamburg.inf.rl.Agent;
 
 public class GridControl extends Observable implements Runnable {
 
-    private volatile boolean running        = false;
-    private int              episodes       = 1;
+    private volatile boolean running  = true;
+    private int              episodes = 1;
 
     private Agent            agent;
-    private Grid             grid;
+    private Target           target;
 
-    public GridControl(Agent agent, Grid grid) {
+    public GridControl(Agent agent, Target target) {
         this.agent = agent;
-        this.grid = grid;
+        this.target = target;
     }
 
     @Override
     public void run() {
         running = true;
+        agent.setGlobalEpisodes(episodes);
+        Thread t = new Thread(target);
+        t.start();
         while (running) {
             for (int i = 0; i < episodes; i++) {
                 if (!running)
                     break;
-                new Thread(grid).start();
                 agent.qLearn();
                 agent.resetAgent();
             }
+            target.terminate();
             agent.printQvalues();
-            grid.terminate();
-            notifyObservers(-1);
-            setChanged();
+            agent.setEpisodes(0);
             this.terminate();
         }
     }
