@@ -116,7 +116,7 @@ public class GridGUI implements Observer {
                         .getText()));
                 gc.setEpisodes(ep = Integer.parseInt(txtEpisodes
                         .getText()));
-
+                
                 setTableValues(ep, a, g);
 
                 Thread t = new Thread(gc);
@@ -570,6 +570,7 @@ public class GridGUI implements Observer {
     private int        tsRow          = 0;
     private int        bsRow          = 0;
     private String     bestSE;
+	private boolean showpath;
 
     @Override
     public void update(Observable o, Object arg) {
@@ -620,6 +621,7 @@ public class GridGUI implements Observer {
     }
 
     private void moveAgent(int[] arg, Orientation orient) {
+    	if (!showpath)
         grid[agentPos[0]][agentPos[1]].setBackground(savedColor);
         for (int i = 0; i < 4; i++) {
             ((JLabel) grid[agentPos[0]][agentPos[1]].getComponents()[i])
